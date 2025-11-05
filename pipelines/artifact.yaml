@@ -5,6 +5,7 @@ metadata:
   namespace: playground
 spec:
   serviceAccountName: playground-sa
+  activeDeadlineSeconds: 60 # terminate workflow after 1 minute
   entrypoint: artifact-example
   artifactRepositoryRef: 
     configMap: s3-repo-config

@@ -1,0 +1,71 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: artifact-passing-s3-
+  namespace: playground
+spec:
+  serviceAccountName: playground-sa
+  entrypoint: artifact-example
+  artifactRepositoryRef: 
+    configMap: s3-repo-config
+    key: artifactRepository
+  onExit: exit-handler
+  templates:
+  - name: artifact-example
+    steps:
+    - - name: generate-artifact
+        template: hello-world-to-file
+    - - name: consume-artifact
+        template: print-message-from-file
+        arguments:
+          parameters:
+          - name: message-to-add
+            value: "This is a new line in the file"
+          artifacts:
+          - name: message
+            from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
+            
+  - name: exit-handler
+    steps:
+    - - name: celebrate
+        template: celebrate
+        when: "{{workflow.status}} == Succeeded"
+    - - name: cry
+        template: cry
+        when: "{{workflow.status}} != Succeeded"
+
+  - name: celebrate
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo hooray!"]
+
+  - name: cry
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ["echo Ahhhh!"]
+
+  - name: hello-world-to-file
+    container:
+      image: busybox
+      command: [sh, -c]
+      args: ["sleep 1; echo I am using argo workflows | tee /tmp/hello_world.txt"]
+    outputs:
+      artifacts:
+      - name: hello-art
+        path: /tmp/hello_world.txt
+        s3:
+          key: argo/hello_world.txt.tgz
+
+  - name: print-message-from-file
+    inputs:
+      parameters:
+       - name: message-to-add
+      artifacts:
+      - name: message
+        path: /tmp/message
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ['echo {{inputs.parameters.message-to-add}} >> /tmp/message && cat /tmp/message']

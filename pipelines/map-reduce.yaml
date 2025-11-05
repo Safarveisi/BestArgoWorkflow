@@ -18,6 +18,9 @@ spec:
   - name: map-reduce-example
     dag:
       tasks:
+        - name: influx
+          template: influxdb              # start an influxdb as a daemon
+
         - name: split
           template: split
           arguments:
@@ -31,11 +34,13 @@ spec:
             parameters:
               - name: partId
                 value: "{{item}}"
+              - name: ip
+                value: "{{tasks.influx.ip}}"
             artifacts:
               - name: part
                 s3:
                   key: "argo/{{workflow.name}}/parts/{{item}}.json"
-          depends: "split"
+          dependencies: [split, influx]
           withParam: "{{tasks.split.outputs.result}}"
 
         - name: reduce
@@ -45,7 +50,7 @@ spec:
               - name: results
                 s3:
                   key: "argo/{{workflow.name}}/results"
-          depends: "map"
+          dependencies: [map]
 
   - name: exit-handler
     steps:
@@ -99,6 +104,7 @@ spec:
     inputs:
       parameters:
         - name: partId
+        - name: ip
       artifacts:
         - name: part
           path: /mnt/in/part.json
@@ -114,7 +120,7 @@ spec:
         with open("/mnt/in/part.json") as f:
             part = json.load(f)
         with open("/mnt/out/part.json", "w") as f:
-          json.dump({"bar": part["foo"] * 2}, f)
+          json.dump({"bar": part["foo"] * 2, "ip": "{{inputs.parameters.ip}}"}, f)
     outputs:
       artifacts:
       - name: part
@@ -152,3 +158,16 @@ spec:
             none: { }
           s3:
             key: "argo/{{workflow.name}}/total.json"
+
+  - name: influxdb
+    daemon: true                        
+    retryStrategy:
+      limit: 10                        
+    container:
+      image: influxdb:1.2
+      command:
+      - influxd
+      readinessProbe:
+        httpGet:
+          path: /ping
+          port: 8086

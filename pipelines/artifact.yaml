@@ -25,6 +25,8 @@ spec:
           artifacts:
           - name: message
             from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
+    - - name: download-file 
+        template: download-file
             
   - name: exit-handler
     steps:
@@ -70,3 +72,16 @@ spec:
       image: alpine:latest
       command: [sh, -c]
       args: ['echo {{inputs.parameters.message-to-add}} >> /tmp/message && cat /tmp/message']
+
+  - name: download-file
+    inputs:
+      artifacts:
+        - name: csv
+          path: /mnt/addresses.csv
+          mode: 
+          http:
+            url: https://people.sc.fsu.edu/~jburkardt/data/csv/addresses.csv
+    container:
+      image: alpine:latest
+      command: [sh, -c]
+      args: ['head -1 /mnt/addresses.csv']

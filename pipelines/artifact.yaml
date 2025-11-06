@@ -5,8 +5,11 @@ metadata:
   namespace: playground
 spec:
   serviceAccountName: playground-sa
-  activeDeadlineSeconds: 60 # terminate workflow after 1 minute
+  activeDeadlineSeconds: 240 # terminate workflow after 4 minutes
   entrypoint: artifact-example
+  volumes:
+    - name: repo-volume
+      emptyDir: {}
   artifactRepositoryRef: 
     configMap: s3-repo-config
     key: artifactRepository
@@ -27,6 +30,8 @@ spec:
             from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
     - - name: download-file 
         template: download-file
+    - - name: sidecar-demo
+        template: sidecar-demo
             
   - name: exit-handler
     steps:
@@ -85,3 +90,39 @@ spec:
       image: alpine:latest
       command: [sh, -c]
       args: ['head -1 /mnt/addresses.csv']
+
+  - name: sidecar-demo
+    volumes:
+    - name: msg-vol               # shared emptyDir volume
+      emptyDir: {}
+    container:
+      name: reader
+      image: alpine:3.19
+      command: [/bin/sh, -c]
+      args:
+        - |
+          for i in $(seq 1 60); do
+            # Print the whole file (or just the last line)
+            echo "=== $(date +%T) - current content of /shared/msg.txt ==="
+            cat /shared/msg.txt || echo "<no file yet>"
+            echo "---------------------------------------------------"
+            sleep 1
+          done
+      volumeMounts:
+        - name: msg-vol
+          mountPath: /shared
+    sidecars:
+    - name: writer
+      image: alpine:3.19
+      command: [/bin/sh, -c]
+      args:
+        - |
+          for i in $(seq 1 60); do
+            # Generate a random string (base64 of 6 random bytes)
+            rnd=$(head -c6 /dev/urandom | base64)
+            echo "$(date +%T) random=$rnd" >> /shared/msg.txt
+            sleep 1
+          done
+      volumeMounts:
+        - name: msg-vol
+          mountPath: /shared

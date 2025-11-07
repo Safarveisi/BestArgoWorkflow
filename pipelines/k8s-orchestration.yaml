@@ -29,6 +29,16 @@ spec:
     
     - - name: spark-application
         template: spark-application
+        arguments:
+          parameters:
+            - name: s3-bucket
+              value: customerintelligence
+            - name: s3-prefix
+              value: argo/scripts/python/spark-job.py
+            - name: s3-endpoint
+              value: "http://s3-de-central.profitbricks.com"
+            - name: s3-region
+              value: "eu-central-1"
     
     - - name: delete-spark-application
         template: delete-spark-application
@@ -38,6 +48,12 @@ spec:
               value: '{{steps.spark-application.outputs.parameters.spark-application-name}}' 
 
   - name: spark-application
+    inputs:
+      parameters:
+        - name: s3-bucket
+        - name: s3-prefix
+        - name: s3-endpoint
+        - name: s3-region
     resource:
       action: create
       successCondition: status.applicationState.state == COMPLETED
@@ -54,14 +70,14 @@ spec:
           mode: cluster
           image: docker.io/ciaa/spark-jobs:v0.1.0
           imagePullPolicy: Always
-          mainApplicationFile: s3a://customerintelligence/argo/scripts/python/spark-job.py
+          mainApplicationFile: s3a://{{inputs.parameters.s3-bucket}}/{{inputs.parameters.s3-prefix}}
           sparkConf:
             spark.hadoop.fs.s3a.aws.credentials.provider: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
             spark.hadoop.fs.s3a.path.style.access: "true"
-            spark.hadoop.fs.s3a.endpoint: "http://s3-de-central.profitbricks.com"
+            spark.hadoop.fs.s3a.endpoint: {{inputs.parameters.s3-endpoint}}
             spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
             spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
-            spark.hadoop.fs.s3a.endpoint.region: "eu-central-1"
+            spark.hadoop.fs.s3a.endpoint.region: {{inputs.parameters.s3-region}}
           sparkVersion: 3.5.2
           driver:
             cores: 1

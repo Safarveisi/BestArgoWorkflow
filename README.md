@@ -41,12 +41,11 @@ argo get @latest -n playground
 (1) Deploy the Kubeflow Spark operator into your K8s cluster
 
 ```bash
-helm repo add spark-operator https://kubeflow.github.io/spark-operator
-helm repo update
 # To run your Spark jobs in a namespace called playground.
 # This will also create a serviceaccount in playground namespace and 
 # driver pod will use it to communicate with K8s API server (e.g., create executor pods).
-helm install spark-operator spark-operator/spark-operator -n spark-operator --set "spark.jobNamespaces={playground}"
+cd helm/charts
+helm upgrade --install -n spark-operator spark-operator ./spark-operator -f ./spark-operator/values.yaml --create-namespace --set "spark.jobNamespaces={playground}"
 ```
 
 (2) Run the workflow 
@@ -54,3 +53,5 @@ helm install spark-operator spark-operator/spark-operator -n spark-operator --se
 ```bash
 argo submit -n playground pipelines/k8s-orchestration.yaml --watch
 ```
+
+![Successful workflow execution](./assets/pipeline.png)

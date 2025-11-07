@@ -53,9 +53,16 @@ spec:
           pythonVersion: "3"
           mode: cluster
           image: docker.io/ciaa/spark-jobs:v0.1.0
-          imagePullPolicy: IfNotPresent
-          mainApplicationFile: local:///opt/spark/examples/src/main/python/spark-job.py
-          sparkVersion: 4.0.0
+          imagePullPolicy: Always
+          mainApplicationFile: s3a://customerintelligence/argo/scripts/python/spark-job.py
+          sparkConf:
+            spark.hadoop.fs.s3a.aws.credentials.provider: "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
+            spark.hadoop.fs.s3a.path.style.access: "true"
+            spark.hadoop.fs.s3a.endpoint: "http://s3-de-central.profitbricks.com"
+            spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
+            spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+            spark.hadoop.fs.s3a.endpoint.region: "eu-central-1"
+          sparkVersion: 3.5.2
           driver:
             cores: 1
             memory: 512m
@@ -70,6 +77,17 @@ spec:
               allowPrivilegeEscalation: false
               seccompProfile:
                 type: RuntimeDefault
+            env:
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: s3-credentials
+                    key: accessKey
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: s3-credentials
+                    key: secretKey
           executor:
             instances: 1
             cores: 1
@@ -84,6 +102,17 @@ spec:
               allowPrivilegeEscalation: false
               seccompProfile:
                 type: RuntimeDefault
+            env:
+              - name: AWS_ACCESS_KEY_ID
+                valueFrom:
+                  secretKeyRef:
+                    name: s3-credentials
+                    key: accessKey
+              - name: AWS_SECRET_ACCESS_KEY
+                valueFrom:
+                  secretKeyRef:
+                    name: s3-credentials
+                    key: secretKey
     outputs:
       parameters:
       - name: spark-application-name

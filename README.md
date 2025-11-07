@@ -32,6 +32,7 @@ argo submit -n playground pipelines/artifact.yaml --watch
 ### Check the status of your pipeline
 
 ```bash
+# You can also use --watch with argo submit to track the workflow progress (see above example)
 argo get @latest -n playground
 ```
 

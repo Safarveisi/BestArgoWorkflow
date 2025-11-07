@@ -56,7 +56,7 @@ spec:
           imagePullPolicy: Always
           mainApplicationFile: s3a://customerintelligence/argo/scripts/python/spark-job.py
           sparkConf:
-            spark.hadoop.fs.s3a.aws.credentials.provider: "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider"
+            spark.hadoop.fs.s3a.aws.credentials.provider: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
             spark.hadoop.fs.s3a.path.style.access: "true"
             spark.hadoop.fs.s3a.endpoint: "http://s3-de-central.profitbricks.com"
             spark.hadoop.fs.s3a.connection.ssl.enabled: "false"

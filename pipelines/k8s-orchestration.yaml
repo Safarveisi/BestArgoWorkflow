@@ -26,6 +26,69 @@ spec:
           parameters:
           - name: job-name
             value: '{{steps.random-number-job.outputs.parameters.job-name}}'
+    
+    - - name: spark-application
+        template: spark-application
+    
+    - - name: delete-spark-application
+        template: delete-spark-application
+        arguments:
+          parameters:
+            - name: spark-application-name
+              value: '{{steps.spark-application.outputs.parameters.spark-application-name}}' 
+
+  - name: spark-application
+    resource:
+      action: create
+      successCondition: status.applicationState.state == COMPLETED
+      failureCondition: status.applicationState.state == FAILED
+      manifest: |
+        apiVersion: sparkoperator.k8s.io/v1beta2
+        kind: SparkApplication
+        metadata:
+          name: spark-pi-python
+          namespace: {{workflow.namespace}}
+        spec:
+          type: Python
+          pythonVersion: "3"
+          mode: cluster
+          image: docker.io/ciaa/spark-jobs:v0.1.0
+          imagePullPolicy: IfNotPresent
+          mainApplicationFile: local:///opt/spark/examples/src/main/python/spark-job.py
+          sparkVersion: 4.0.0
+          driver:
+            cores: 1
+            memory: 512m
+            serviceAccount: spark-operator-spark
+            securityContext:
+              capabilities:
+                drop:
+                - ALL
+              runAsGroup: 185
+              runAsUser: 185
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              seccompProfile:
+                type: RuntimeDefault
+          executor:
+            instances: 1
+            cores: 1
+            memory: 512m
+            securityContext:
+              capabilities:
+                drop:
+                - ALL
+              runAsGroup: 185
+              runAsUser: 185
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              seccompProfile:
+                type: RuntimeDefault
+    outputs:
+      parameters:
+      - name: spark-application-name
+        valueFrom:
+          jsonPath: '{.metadata.name}'
 
   - name: random-number-job
     resource:
@@ -85,4 +148,17 @@ spec:
         kind: Job
         metadata:
           name: {{inputs.parameters.job-name}}
+          namespace: {{workflow.namespace}}
+  
+  - name: delete-spark-application
+    inputs:
+      parameters:
+        - name: spark-application-name
+    resource:
+      action: delete
+      manifest: |
+        apiVersion: sparkoperator.k8s.io/v1beta2
+        kind: SparkApplication
+        metadata:
+          name: {{inputs.parameters.spark-application-name}}
           namespace: {{workflow.namespace}}

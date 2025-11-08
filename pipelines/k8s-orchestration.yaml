@@ -78,7 +78,7 @@ spec:
             spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
             spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
             spark.hadoop.fs.s3a.endpoint.region: {{inputs.parameters.s3-region}}
-          sparkVersion: 3.5.2
+          sparkVersion: 4.0.1
           driver:
             cores: 1
             memory: 512m

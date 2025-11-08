@@ -67,8 +67,7 @@ if __name__ == "__main__":
     df_filtered = df.filter(df.age > 30)
     print("\nFiltered rows (age > 30):")
     df_filtered.show()
-    df_filtered.write.format("csv") \
-        .option("header", "true").mode("overwrite") \
+    df_filtered.write.format("parquet").mode("overwrite") \
         .save("s3a://customerintelligence/argo/files")
     # When you’re finally done, stop Spark explicitly
     spark.stop()

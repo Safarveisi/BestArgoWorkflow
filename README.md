@@ -99,3 +99,5 @@ kubectl -n argo-events port-forward svc/webhook-eventsource-svc 12000:12000
 ```bash
 curl -d '{}' -H "Content-Type: application/json" -X POST http://localhost:12000/example
 ```
+
+![Successful workflow trigger](./assets/event.png)

@@ -100,4 +100,10 @@ kubectl -n argo-events port-forward svc/webhook-eventsource-svc 12000:12000
 curl -d '{}' -H "Content-Type: application/json" -X POST http://localhost:12000/example
 ```
 
+(7) Verify that an Argo Workflow was triggered
+
+```bash
+kubectl -n playground get workflows | grep k8s-orchestrate
+```
+
 ![Successful workflow trigger](./assets/event.png)

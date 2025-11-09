@@ -7,11 +7,12 @@ spec:
   template:
     serviceAccountName: operate-workflow-sa
   dependencies:
-    - name: test-dep
+    - name: dep0
       eventSourceName: webhook
       eventName: example
   triggers:
     - template:
+        conditions: "dep0"
         name: webhook-workflow-trigger
         k8s:
           operation: create

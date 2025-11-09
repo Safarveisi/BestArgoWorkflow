@@ -1,0 +1,228 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Sensor
+metadata:
+  name: webhook
+  namespace: argo-events
+spec:
+  template:
+    serviceAccountName: operate-workflow-sa
+  dependencies:
+    - name: test-dep
+      eventSourceName: webhook
+      eventName: example
+  triggers:
+    - template:
+        name: webhook-workflow-trigger
+        k8s:
+          operation: create
+          source:
+            resource:
+              apiVersion: argoproj.io/v1alpha1
+              kind: Workflow
+              metadata:
+                generateName: k8s-orchestrate-
+                namespace: playground
+              spec:
+                serviceAccountName: playground-sa
+                entrypoint: k8s-orchestrate
+                templates:
+                - name: k8s-orchestrate
+                  steps:
+
+                  - - name: random-number-job
+                      template: random-number-job
+
+                  - - name: print-generated-numbers
+                      template: print-generated-numbers
+                      arguments:
+                        parameters:
+                        - name: job-uid
+                          value: '{{steps.random-number-job.outputs.parameters.job-uid}}'
+
+                  - - name: delete-job
+                      template: delete-job
+                      arguments:
+                        parameters:
+                        - name: job-name
+                          value: '{{steps.random-number-job.outputs.parameters.job-name}}'
+                  
+                  - - name: spark-application
+                      template: spark-application
+                      arguments:
+                        parameters:
+                          - name: s3-bucket
+                            value: customerintelligence
+                          - name: s3-prefix
+                            value: argo/scripts/python/spark-job.py
+                          - name: s3-endpoint
+                            value: "http://s3-de-central.profitbricks.com"
+                          - name: s3-region
+                            value: "eu-central-1"
+                  
+                  - - name: delete-spark-application
+                      template: delete-spark-application
+                      arguments:
+                        parameters:
+                          - name: spark-application-name
+                            value: '{{steps.spark-application.outputs.parameters.spark-application-name}}' 
+
+                - name: spark-application
+                  inputs:
+                    parameters:
+                      - name: s3-bucket
+                      - name: s3-prefix
+                      - name: s3-endpoint
+                      - name: s3-region
+                  resource:
+                    action: create
+                    successCondition: status.applicationState.state == COMPLETED
+                    failureCondition: status.applicationState.state == FAILED
+                    manifest: |
+                      apiVersion: sparkoperator.k8s.io/v1beta2
+                      kind: SparkApplication
+                      metadata:
+                        name: spark-python
+                        namespace: {{workflow.namespace}}
+                      spec:
+                        type: Python
+                        pythonVersion: "3"
+                        mode: cluster
+                        image: docker.io/ciaa/spark-jobs:v0.1.0
+                        imagePullPolicy: Always
+                        mainApplicationFile: s3a://{{inputs.parameters.s3-bucket}}/{{inputs.parameters.s3-prefix}}
+                        sparkConf:
+                          spark.hadoop.fs.s3a.aws.credentials.provider: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
+                          spark.hadoop.fs.s3a.path.style.access: "true"
+                          spark.hadoop.fs.s3a.endpoint: {{inputs.parameters.s3-endpoint}}
+                          spark.hadoop.fs.s3a.connection.ssl.enabled: "false"
+                          spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
+                          spark.hadoop.fs.s3a.endpoint.region: {{inputs.parameters.s3-region}}
+                        sparkVersion: 4.0.1
+                        driver:
+                          cores: 1
+                          memory: 512m
+                          serviceAccount: spark-operator-spark
+                          securityContext:
+                            capabilities:
+                              drop:
+                              - ALL
+                            runAsGroup: 185
+                            runAsUser: 185
+                            runAsNonRoot: true
+                            allowPrivilegeEscalation: false
+                            seccompProfile:
+                              type: RuntimeDefault
+                          env:
+                            - name: AWS_ACCESS_KEY_ID
+                              valueFrom:
+                                secretKeyRef:
+                                  name: s3-credentials
+                                  key: accessKey
+                            - name: AWS_SECRET_ACCESS_KEY
+                              valueFrom:
+                                secretKeyRef:
+                                  name: s3-credentials
+                                  key: secretKey
+                        executor:
+                          instances: 1
+                          cores: 1
+                          memory: 512m
+                          securityContext:
+                            capabilities:
+                              drop:
+                              - ALL
+                            runAsGroup: 185
+                            runAsUser: 185
+                            runAsNonRoot: true
+                            allowPrivilegeEscalation: false
+                            seccompProfile:
+                              type: RuntimeDefault
+                          env:
+                            - name: AWS_ACCESS_KEY_ID
+                              valueFrom:
+                                secretKeyRef:
+                                  name: s3-credentials
+                                  key: accessKey
+                            - name: AWS_SECRET_ACCESS_KEY
+                              valueFrom:
+                                secretKeyRef:
+                                  name: s3-credentials
+                                  key: secretKey
+                  outputs:
+                    parameters:
+                    - name: spark-application-name
+                      valueFrom:
+                        jsonPath: '{.metadata.name}'
+
+                - name: random-number-job
+                  resource:
+                    action: create
+                    successCondition: status.succeeded > 9
+                    failureCondition: status.failed > 0
+                    manifest: |
+                      apiVersion: batch/v1
+                      kind: Job
+                      metadata:
+                        generateName: rand-num-
+                        namespace: {{workflow.namespace}}
+                      spec:
+                        completions: 10
+                        parallelism: 10
+                        template:
+                          metadata:
+                            name: rand
+                          spec:
+                            containers:
+                            - name: rand
+                              image: python:alpine3.6
+                              command: ["python", "-c", "import random; import time; print(random.randint(1, 1000)); time.sleep(10)"]
+                            restartPolicy: Never
+                  outputs:
+                    parameters:
+                    - name: job-name
+                      valueFrom:
+                        jsonPath: '{.metadata.name}'
+                    - name: job-uid
+                      valueFrom:
+                        jsonPath: '{.metadata.uid}'
+
+                - name: print-generated-numbers
+                  inputs:
+                    parameters:
+                    - name: job-uid
+                  container:
+                    image: bitnami/kubectl:latest
+                    command: [sh, -c]
+                    args:
+                      - | 
+                        for pod in $(kubectl get pods -n {{workflow.namespace}} \
+                                  -l controller-uid={{inputs.parameters.job-uid}} \
+                                  -o name); do
+                          kubectl logs -n {{workflow.namespace}} "$pod"
+                        done
+
+                - name: delete-job
+                  inputs:
+                    parameters:
+                    - name: job-name
+                  resource:
+                    action: delete
+                    manifest: |
+                      apiVersion: batch/v1
+                      kind: Job
+                      metadata:
+                        name: {{inputs.parameters.job-name}}
+                        namespace: {{workflow.namespace}}
+                
+                - name: delete-spark-application
+                  inputs:
+                    parameters:
+                      - name: spark-application-name
+                  resource:
+                    action: delete
+                    manifest: |
+                      apiVersion: sparkoperator.k8s.io/v1beta2
+                      kind: SparkApplication
+                      metadata:
+                        name: {{inputs.parameters.spark-application-name}}
+                        namespace: {{workflow.namespace}}

@@ -55,3 +55,47 @@ argo submit -n playground pipelines/k8s-orchestration.yaml --watch
 ```
 
 ![Successful workflow execution](./assets/pipeline.png)
+
+### Trigger an Argo Workflow using Argo Events
+
+Suppose you want to trigger one of your workflows using a webhook - you can use Argo Events to achieve this.
+
+(1) Install Ago Events on your K8s cluster
+
+```bash
+kubectl create namespace argo-events
+kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install.yaml
+kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install-validating-webhook.yaml
+```
+
+(2) Create EventBus pods
+
+```bash
+kubectl apply -n argo-events -f https://raw.githubusercontent.com/argoproj/argo-events/stable/examples/eventbus/native.yaml
+```
+
+(3) Set up the event source for the webhook — this is one of the possible event source types supported by Argo Events.
+
+```bash
+kubectl apply -f events/source/webhook.yaml
+```
+
+(4) Create a service account with the necessary RBAC permissions to allow the sensor to trigger an Argo Workflow in the `playground` namespace.
+In this setup, I created a `ClusterRole`, which enables the workflow to be created in any namespace.
+Alternatively, you can create a **namespace-scoped Role** in `playground` and bind it to a service account in the `argo-events` namespace to achieve the same result with more restricted permissions.
+
+```bash
+kubectl apply -f events/roles
+```
+
+(5) Port-forward (dev mode) the service that was created when you configured the webhook event source.
+
+```bash
+kubectl -n argo-events port-forward svc/webhook-eventsource-svc 12000:12000
+```
+
+(6) Trigger the Workflow  
+
+```bash
+curl -d '{}' -H "Content-Type: application/json" -X POST http://localhost:12000/example
+```

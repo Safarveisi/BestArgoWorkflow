@@ -53,7 +53,7 @@ def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = Tru
         spark.stop()
         print("\nSpark session stopped.")
     else:
-        print("\nSpark session left running – you can reuse `spark` later.")
+        print("\nSpark session left running - you can reuse `spark` later.")
 
     # Return objects for further use if desired
     return df, spark
@@ -69,5 +69,5 @@ if __name__ == "__main__":
     df_filtered.show()
     df_filtered.write.format("parquet").mode("overwrite") \
         .save("s3a://customerintelligence/argo/files")
-    # When you’re finally done, stop Spark explicitly
+    # stop Spark explicitly
     spark.stop()

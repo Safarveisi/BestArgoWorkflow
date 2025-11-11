@@ -88,16 +88,43 @@ Alternatively, you can create a **namespace-scoped Role** in `playground` and bi
 kubectl apply -f events/roles
 ```
 
-(5) Port-forward (dev mode) the service that was created when you configured the webhook event source.
+(5) Create the Argo Events sensor 
 
 ```bash
-kubectl -n argo-events port-forward svc/webhook-eventsource-svc 12000:12000
+kubectl apply -f events/sensor/spark-sensor.yaml
+```
+
+(6) Define an Ingress resource for exposing an Argo Events webhook event source service externally through an NGINX Ingress Controller.
+
+(6.1) Install ingress-nginx controller for ingress on your K8s cluster 
+
+```bash
+cd helm/charts
+helm upgrade --install -n ingress-nginx ingress-nginx ./ingress-nginx -f ./ingress-nginx/values.yaml --create-namespace
+```
+
+(6.2)
+
+```bash
+kubectl apply -f events/ingress/ingress.yaml
+```
+
+(6.3) Get the IP address of the ingress load balancer 
+
+```bash
+kubectl get ingress webhook-event-source -n argo-events -o json | jq -r '.status.loadBalancer.ingress[0].ip'
+```
+
+(6.4) For Linux users, add the following line to `/etc/hosts`
+
+```txt
+load_balancer_ip   demo-argo-workflows.com
 ```
 
 (6) Trigger the Workflow  
 
 ```bash
-curl -d '{}' -H "Content-Type: application/json" -X POST http://localhost:12000/example
+curl -d '{}' -H "Content-Type: application/json" -X POST http://demo-argo-workflows.com:80/trigger/workflow/example
 ```
 
 (7) Verify that an Argo Workflow was triggered
@@ -107,3 +134,9 @@ kubectl -n playground get workflows | grep k8s-orchestrate
 ```
 
 ![Successful workflow trigger](./assets/event.png)
+
+(8) Delete all terminated pods in `playground` namespace (optional)
+
+```bash
+kubectl get pods -n playground -o name | xargs kubectl delete -n playground
+```

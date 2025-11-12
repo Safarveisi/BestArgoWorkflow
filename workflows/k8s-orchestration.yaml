@@ -79,6 +79,8 @@ spec:
             spark.hadoop.fs.s3a.impl: "org.apache.hadoop.fs.s3a.S3AFileSystem"
             spark.hadoop.fs.s3a.endpoint.region: {{inputs.parameters.s3-region}}
           sparkVersion: 4.0.1
+          restartPolicy:
+            type: Never
           driver:
             cores: 1
             memory: 512m

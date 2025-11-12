@@ -121,13 +121,13 @@ kubectl get ingress webhook-event-source -n argo-events -o json | jq -r '.status
 load_balancer_ip   demo-argo-workflows.com
 ```
 
-(6) Trigger the Workflow  
+(7) Trigger the Workflow  
 
 ```bash
 curl -d '{}' -H "Content-Type: application/json" -X POST http://demo-argo-workflows.com:80/trigger/workflow/example
 ```
 
-(7) Verify that an Argo Workflow was triggered
+(8) Verify that an Argo Workflow was triggered
 
 ```bash
 kubectl -n playground get workflows | grep k8s-orchestrate
@@ -135,7 +135,7 @@ kubectl -n playground get workflows | grep k8s-orchestrate
 
 ![Successful workflow trigger](./assets/event.png)
 
-(8) Delete all terminated pods in `playground` namespace (optional)
+(9) Delete all terminated pods in `playground` namespace (optional)
 
 ```bash
 kubectl get pods -n playground -o name | xargs kubectl delete -n playground

@@ -94,7 +94,7 @@ kubectl apply -f events/roles
 kubectl apply -f events/sensor/spark-sensor.yaml
 ```
 
-(6) Define an Ingress resource for exposing an Argo Events webhook event source service externally through an NGINX Ingress Controller.
+(6) Define an ingress resource for exposing an Argo Events webhook event source service externally through an NGINX ingress Controller.
 
 (6.1) Install ingress-nginx controller for ingress on your K8s cluster 
 
@@ -135,7 +135,25 @@ kubectl -n playground get workflows | grep k8s-orchestrate
 
 ![Successful workflow trigger](./assets/event.png)
 
-(9) Delete all terminated pods in `playground` namespace (optional)
+(9) Access the Argo workflows UI (optional)
+
+(9.1) Extract the bearer token
+
+```bash
+argo auth token
+```
+
+(9.2) Run port-forward command to access the Argo Workflow Web UI from localhost. Alternatively, you can use an ingress resource to expose the service externally. 
+
+```bash
+kubectl port-forward svc/argo-server -n argo 2746:2746
+```
+
+(9.3) Open browser and enter https://localhost:2746/ and paste the token (whole text including Bearer) into the white rectangle. You can now view the submitted workflows. 
+
+![Argo workflows-UI](./assets/ui.png)
+
+(10) Delete all terminated pods in `playground` namespace (optional)
 
 ```bash
 kubectl get pods -n playground -o name | xargs kubectl delete -n playground

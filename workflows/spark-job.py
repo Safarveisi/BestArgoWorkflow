@@ -25,6 +25,8 @@ def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = Tru
         .appName(app_name) \
         .getOrCreate()
 
+    spark.sparkContext.setLogLevel("INFO")
+
     # Define a tiny schema and some example data
     schema = StructType([
         StructField("id",   IntegerType(), nullable=False),

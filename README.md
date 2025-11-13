@@ -13,9 +13,9 @@ kubectl apply -n argo -f https://github.com/argoproj/argo-workflows/releases/dow
 kubectl create namespace playground # Workflows as well as other resources are created in this namespace
 ```
 
-## Create required resources 
+## Create required resources
 
-```bash 
+```bash
 kubectl apply -f roles/ # This service account is used in Workflow CRDs
 # CAUTION Make sure you have already created the secret `s3-credentials` referenced in the configmap
 kubectl apply -f configmap/artifact-repository.yaml # Holds S3 credentials and configurations
@@ -42,13 +42,13 @@ argo get @latest -n playground
 
 ```bash
 # To run your Spark jobs in a namespace called playground.
-# This will also create a serviceaccount in playground namespace and 
+# This will also create a serviceaccount in playground namespace and
 # driver pod will use it to communicate with K8s API server (e.g., create executor pods).
 cd helm/charts
 helm upgrade --install -n spark-operator spark-operator ./spark-operator -f ./spark-operator/values.yaml --create-namespace --set "spark.jobNamespaces={playground}"
 ```
 
-(2) Run the workflow 
+(2) Run the workflow
 
 ```bash
 argo submit -n playground pipelines/k8s-orchestration.yaml --watch
@@ -88,7 +88,7 @@ Alternatively, you can create a **namespace-scoped Role** in `playground` and bi
 kubectl apply -f events/roles
 ```
 
-(5) Create the Argo Events sensor 
+(5) Create the Argo Events sensor
 
 ```bash
 kubectl apply -f events/sensor/spark-sensor.yaml
@@ -96,7 +96,7 @@ kubectl apply -f events/sensor/spark-sensor.yaml
 
 (6) Define an ingress resource for exposing an Argo Events webhook event source service externally through an NGINX ingress Controller.
 
-(6.1) Install ingress-nginx controller for ingress on your K8s cluster 
+(6.1) Install ingress-nginx controller for ingress on your K8s cluster
 
 ```bash
 cd helm/charts
@@ -109,7 +109,7 @@ helm upgrade --install -n ingress-nginx ingress-nginx ./ingress-nginx -f ./ingre
 kubectl apply -f events/ingress/ingress.yaml
 ```
 
-(6.3) Get the IP address of the ingress load balancer 
+(6.3) Get the IP address of the ingress load balancer
 
 ```bash
 kubectl get ingress webhook-event-source -n argo-events -o json | jq -r '.status.loadBalancer.ingress[0].ip'
@@ -121,7 +121,7 @@ kubectl get ingress webhook-event-source -n argo-events -o json | jq -r '.status
 load_balancer_ip   demo-argo-workflows.com
 ```
 
-(7) Trigger the Workflow  
+(7) Trigger the Workflow
 
 ```bash
 curl -d '{}' -H "Content-Type: application/json" -X POST http://demo-argo-workflows.com:80/trigger/workflow/example
@@ -143,13 +143,13 @@ kubectl -n playground get workflows | grep k8s-orchestrate
 argo auth token
 ```
 
-(9.2) Run port-forward command to access the Argo Workflow Web UI from localhost. Alternatively, you can use an ingress resource to expose the service externally. 
+(9.2) Run port-forward command to access the Argo Workflow Web UI from localhost. Alternatively, you can use an ingress resource to expose the service externally.
 
 ```bash
 kubectl port-forward svc/argo-server -n argo 2746:2746
 ```
 
-(9.3) Open browser and enter https://localhost:2746/ and paste the token (whole text including Bearer) into the white rectangle. You can now view the submitted workflows. 
+(9.3) Open browser and enter https://localhost:2746/ and paste the token (whole text including Bearer) into the white rectangle. You can now view the submitted workflows.
 
 ![Argo workflows-UI](./assets/ui.png)
 

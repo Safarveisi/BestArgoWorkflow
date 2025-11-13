@@ -6,13 +6,13 @@ metadata:
 spec:
   serviceAccountName: playground-sa
   entrypoint: k8s-orchestrate
-  artifactRepositoryRef: 
+  artifactRepositoryRef:
     configMap: s3-repo-config
     key: artifactRepository
   arguments:
     parameters:
-      - name: spark-job-name # Ensures the final step always runs if the spark job fails 
-        value: spark-python 
+      - name: spark-job-name # Ensures the final step always runs if the spark job fails
+        value: spark-python
   templates:
   - name: k8s-orchestrate
     steps:
@@ -36,7 +36,7 @@ spec:
 
     - - name: generate-salary
         template: generate-salary
-       
+
     - - name: spark-application
         template: spark-application
         continueOn:
@@ -53,7 +53,7 @@ spec:
               value: "eu-central-1"
             - name: s3-file-prefix
               value: '{{steps.generate-salary.outputs.parameters.s3-file-prefix}}'
-    
+
     - - name: delete-spark-application
         template: delete-spark-application
 
@@ -62,7 +62,7 @@ spec:
       image: alpine:latest
       command: [sh, -c]
       args:
-        - | 
+        - |
           cat <<EOF > /tmp/salary.csv
           id,salary
           1,45000
@@ -74,7 +74,7 @@ spec:
       artifacts:
         - name: salary-csv
           path: /tmp/salary.csv
-          archive: 
+          archive:
             none: { }
           s3:
             key: argo/spark/artifacts/salary.csv
@@ -211,7 +211,7 @@ spec:
       image: bitnami/kubectl:latest
       command: [sh, -c]
       args:
-        - | 
+        - |
           for pod in $(kubectl get pods -n {{workflow.namespace}} \
                      -l controller-uid={{inputs.parameters.job-uid}} \
                      -o name); do
@@ -230,7 +230,7 @@ spec:
         metadata:
           name: {{inputs.parameters.job-name}}
           namespace: {{workflow.namespace}}
-  
+
   - name: delete-spark-application
     resource:
       action: delete

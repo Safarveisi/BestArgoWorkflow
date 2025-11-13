@@ -29,7 +29,7 @@ spec:
       image: busybox
       command: [sh, -c]
       args: ["echo generating message in volume; echo hello world | tee /mnt/vol/hello_world.txt"]
-      volumeMounts:                     
+      volumeMounts:
       - name: workdir
         mountPath: /mnt/vol
 
@@ -38,6 +38,6 @@ spec:
       image: alpine:latest
       command: [sh, -c]
       args: ["echo getting message from volume; find /mnt/vol; cat /mnt/vol/hello_world.txt"]
-      volumeMounts:                    
+      volumeMounts:
       - name: workdir
         mountPath: /mnt/vol

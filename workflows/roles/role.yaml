@@ -16,18 +16,18 @@ rules:
       - watch
 
   - apiGroups:
-      - batch          
+      - batch
     resources:
       - jobs
     verbs:
-      - create        
+      - create
       - get
       - list
       - watch
-      - delete    
+      - delete
 
   - apiGroups:
-      - ""              
+      - ""
     resources:
       - pods
       - pods/log

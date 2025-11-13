@@ -10,7 +10,7 @@ spec:
   volumes:
     - name: repo-volume
       emptyDir: {}
-  artifactRepositoryRef: 
+  artifactRepositoryRef:
     configMap: s3-repo-config
     key: artifactRepository
   onExit: exit-handler
@@ -28,11 +28,11 @@ spec:
           artifacts:
           - name: message
             from: "{{steps.generate-artifact.outputs.artifacts.hello-art}}"
-    - - name: download-file 
+    - - name: download-file
         template: download-file
     - - name: sidecar-demo
         template: sidecar-demo
-            
+
   - name: exit-handler
     steps:
     - - name: celebrate
@@ -83,7 +83,7 @@ spec:
       artifacts:
         - name: csv
           path: /mnt/addresses.csv
-          mode: 
+          mode:
           http:
             url: https://people.sc.fsu.edu/~jburkardt/data/csv/addresses.csv
     container:

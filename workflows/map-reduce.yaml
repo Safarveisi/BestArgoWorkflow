@@ -6,7 +6,7 @@ metadata:
 spec:
   serviceAccountName: playground-sa
   entrypoint: map-reduce-example
-  artifactRepositoryRef: 
+  artifactRepositoryRef:
     configMap: s3-repo-config
     key: artifactRepository
   arguments:
@@ -46,7 +46,7 @@ spec:
         - name: reduce
           template: reduce
           arguments:
-            artifacts: 
+            artifacts:
               - name: results
                 s3:
                   key: "argo/{{workflow.name}}/results"
@@ -79,7 +79,7 @@ spec:
         - name: numParts
     script:
       image: python:alpine3.6
-      command: 
+      command:
         - python
       source: |
         import json
@@ -95,7 +95,7 @@ spec:
       artifacts:
       - name: parts
         path: /mnt/out
-        archive: 
+        archive:
           none: { }
         s3:
           key: "argo/{{workflow.name}}/parts/"
@@ -110,7 +110,7 @@ spec:
           path: /mnt/in/part.json
     script:
       image: python:alpine3.6
-      command: 
+      command:
         - python
       source: |
         import json
@@ -125,7 +125,7 @@ spec:
       artifacts:
       - name: part
         path: /mnt/out/part.json
-        archive: 
+        archive:
           none: { }
         s3:
           key: "argo/{{workflow.name}}/results/{{inputs.parameters.partId}}.json"
@@ -160,9 +160,9 @@ spec:
             key: "argo/{{workflow.name}}/total.json"
 
   - name: influxdb
-    daemon: true                        
+    daemon: true
     retryStrategy:
-      limit: 10                        
+      limit: 10
     container:
       image: influxdb:1.2
       command:

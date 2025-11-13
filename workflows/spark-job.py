@@ -1,3 +1,7 @@
+import argparse
+from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+
 def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = True):
     """
     Create a SparkSession, build a sample DataFrame, display it, and (optionally) stop Spark.
@@ -17,9 +21,6 @@ def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = Tru
     pyspark.sql.SparkSession
         The SparkSession that was created (or retrieved).
     """
-    from pyspark.sql import SparkSession
-    from pyspark.sql.types import StructType, StructField, IntegerType, StringType
-
     # If a SparkSession already exists in the JVM, `getOrCreate` will return it.
     spark = SparkSession.builder \
         .appName(app_name) \
@@ -62,14 +63,37 @@ def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = Tru
 
 
 if __name__ == "__main__":
-    # keep the session alive for more work
-    df, spark = spark_sample_demo(stop_after=False)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--s3key', required=True, type=str, help="S3 file key")
+    args = parser.parse_args()
 
+    # keep the session alive for more work
+    df_sample, spark = spark_sample_demo(stop_after=False)
+    # Define schema for the dataframe of salaries
+    salary_schema = StructType([
+        StructField("id", IntegerType(), nullable=False),
+        StructField("salary", IntegerType(), nullable=False)
+    ])
+    # Read csv file of salaries from a S3 bucket
+    df_salary = spark.read.format("csv") \
+      .option("header", True) \
+      .schema(salary_schema) \
+      .load(f"s3a://{args.s3key}")
+    df_salary.show()
     # Do more Spark transformations ...
-    df_filtered = df.filter(df.age > 30)
+    df_filtered = df_sample.filter(df_sample.age > 30)
+    
     print("\nFiltered rows (age > 30):")
     df_filtered.show()
-    df_filtered.write.format("parquet").mode("overwrite") \
-        .save("s3a://customerintelligence/argo/files")
+
+    print("\nFiltered rows with salary:")
+    # Merge the two dataframes
+    df_filtered_with_salary = df_filtered.join(
+        df_salary, df_filtered.id == df_salary.id,
+        "inner").drop(df_salary.id)
+    df_filtered_with_salary.show() 
+    # Write the dataframe to the S3 bucket
+    df_filtered_with_salary.write.format("csv").mode("overwrite") \
+        .save(f"s3a://{args.s3key.split('/')[0]}/argo/spark/artifacts/processed")
     # stop Spark explicitly
     spark.stop()

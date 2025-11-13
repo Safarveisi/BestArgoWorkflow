@@ -26,6 +26,13 @@ spec:
               spec:
                 serviceAccountName: playground-sa
                 entrypoint: k8s-orchestrate
+                artifactRepositoryRef: 
+                  configMap: s3-repo-config
+                  key: artifactRepository
+                arguments:
+                  parameters:
+                    - name: spark-job-name # Ensures the final step always runs if the spark job fails 
+                      value: spark-python 
                 templates:
                 - name: k8s-orchestrate
                   steps:
@@ -46,34 +53,63 @@ spec:
                         parameters:
                         - name: job-name
                           value: '{{steps.random-number-job.outputs.parameters.job-name}}'
-                  
+
+                  - - name: generate-salary
+                      template: generate-salary
+                    
                   - - name: spark-application
                       template: spark-application
+                      continueOn:
+                        failed: true
                       arguments:
                         parameters:
                           - name: s3-bucket
                             value: customerintelligence
-                          - name: s3-prefix
+                          - name: s3-script-prefix
                             value: argo/scripts/python/spark-job.py
                           - name: s3-endpoint
                             value: "http://s3-de-central.profitbricks.com"
                           - name: s3-region
                             value: "eu-central-1"
+                          - name: s3-file-prefix
+                            value: '{{steps.generate-salary.outputs.parameters.s3-file-prefix}}'
                   
                   - - name: delete-spark-application
                       template: delete-spark-application
-                      arguments:
-                        parameters:
-                          - name: spark-application-name
-                            value: '{{steps.spark-application.outputs.parameters.spark-application-name}}' 
+
+                - name: generate-salary
+                  container:
+                    image: alpine:latest
+                    command: [sh, -c]
+                    args:
+                      - | 
+                        cat <<EOF > /tmp/salary.csv
+                        id,salary
+                        1,45000
+                        2,90000
+                        3,65000
+                        4,44000
+                        EOF
+                  outputs:
+                    artifacts:
+                      - name: salary-csv
+                        path: /tmp/salary.csv
+                        archive: 
+                          none: { }
+                        s3:
+                          key: argo/spark/artifacts/salary.csv
+                    parameters:
+                      - name: s3-file-prefix
+                        value: 'argo/spark/artifacts/salary.csv'
 
                 - name: spark-application
                   inputs:
                     parameters:
                       - name: s3-bucket
-                      - name: s3-prefix
+                      - name: s3-script-prefix
                       - name: s3-endpoint
                       - name: s3-region
+                      - name: s3-file-prefix
                   resource:
                     action: create
                     successCondition: status.applicationState.state == COMPLETED
@@ -82,7 +118,7 @@ spec:
                       apiVersion: sparkoperator.k8s.io/v1beta2
                       kind: SparkApplication
                       metadata:
-                        name: spark-python
+                        name: {{workflow.parameters.spark-job-name}}
                         namespace: {{workflow.namespace}}
                       spec:
                         type: Python
@@ -90,7 +126,10 @@ spec:
                         mode: cluster
                         image: docker.io/ciaa/spark-jobs:v0.1.0
                         imagePullPolicy: Always
-                        mainApplicationFile: s3a://{{inputs.parameters.s3-bucket}}/{{inputs.parameters.s3-prefix}}
+                        mainApplicationFile: s3a://{{inputs.parameters.s3-bucket}}/{{inputs.parameters.s3-script-prefix}}
+                        arguments:
+                          - "--s3key"
+                          - "{{inputs.parameters.s3-bucket}}/{{inputs.parameters.s3-file-prefix}}"
                         sparkConf:
                           spark.hadoop.fs.s3a.aws.credentials.provider: "com.amazonaws.auth.EnvironmentVariableCredentialsProvider"
                           spark.hadoop.fs.s3a.path.style.access: "true"
@@ -151,11 +190,6 @@ spec:
                                 secretKeyRef:
                                   name: s3-credentials
                                   key: secretKey
-                  outputs:
-                    parameters:
-                    - name: spark-application-name
-                      valueFrom:
-                        jsonPath: '{.metadata.name}'
 
                 - name: random-number-job
                   resource:
@@ -218,14 +252,11 @@ spec:
                         namespace: {{workflow.namespace}}
                 
                 - name: delete-spark-application
-                  inputs:
-                    parameters:
-                      - name: spark-application-name
                   resource:
                     action: delete
                     manifest: |
                       apiVersion: sparkoperator.k8s.io/v1beta2
                       kind: SparkApplication
                       metadata:
-                        name: {{inputs.parameters.spark-application-name}}
+                        name: {{workflow.parameters.spark-job-name}}
                         namespace: {{workflow.namespace}}

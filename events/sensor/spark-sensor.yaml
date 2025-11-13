@@ -141,6 +141,9 @@ spec:
                         restartPolicy:
                           type: Never
                         driver:
+                          configMaps:
+                            - name: spark-dummy
+                              path: /mnt/dummy
                           cores: 1
                           memory: 512m
                           serviceAccount: spark-operator-spark

@@ -1,6 +1,7 @@
 import argparse
 from pyspark.sql import SparkSession
 from pyspark.sql.types import StructType, StructField, IntegerType, StringType
+import configparser
 
 
 def spark_sample_demo(app_name: str = "spark_sample_app", stop_after: bool = True):
@@ -68,8 +69,13 @@ if __name__ == "__main__":
     parser.add_argument("--s3key", required=True, type=str, help="S3 file key")
     args = parser.parse_args()
 
+    # Get the Spark application name from the file mounted from the Configmap
+    config = configparser.ConfigParser()
+    config.read("/mnt/dummy/dummy.ini")
     # keep the session alive for more work
-    df_sample, spark = spark_sample_demo(stop_after=False)
+    df_sample, spark = spark_sample_demo(
+        app_name=config.get("SPARK", "SparkApplicationName"), stop_after=False
+    )
     # Define schema for the dataframe of salaries
     salary_schema = StructType(
         [

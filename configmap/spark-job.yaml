@@ -4,5 +4,6 @@ metadata:
   name: spark-dummy
   namespace: playground
 data:
-  dummy.txt: |
+  dummy.ini: |
+    [SPARK]
     SparkApplicationName=example

@@ -146,8 +146,7 @@ spec:
                           serviceAccount: spark-operator-spark
                           securityContext:
                             capabilities:
-                              drop:
-                              - ALL
+                              drop: [ALL]
                             runAsGroup: 185
                             runAsUser: 185
                             runAsNonRoot: true
@@ -171,8 +170,7 @@ spec:
                           memory: 512m
                           securityContext:
                             capabilities:
-                              drop:
-                              - ALL
+                              drop: [ALL]
                             runAsGroup: 185
                             runAsUser: 185
                             runAsNonRoot: true

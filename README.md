@@ -111,6 +111,8 @@ arguments:
 > There are also some other steps in the workflow that write an artifact into s3. You should alter
 > the key to suit your needs.
 
+Now you can create the Events sensor
+
 ```bash
 kubectl apply -f events/sensor/spark-sensor.yaml
 ```

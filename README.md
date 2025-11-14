@@ -18,7 +18,7 @@ kubectl create namespace playground # Workflows as well as other resources are c
 ```bash
 kubectl apply -f roles/ # This service account is used in Workflow CRDs
 # CAUTION Make sure you have already created the secret `s3-credentials` referenced in the configmap
-kubectl apply -f configmap/artifact-repository.yaml # Holds S3 credentials and configurations
+kubectl apply -f configmap/ # S3 credentials and Spark application configurations
 ```
 
 ## Submit a pipeline

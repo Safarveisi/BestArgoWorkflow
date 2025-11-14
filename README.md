@@ -90,6 +90,27 @@ kubectl apply -f events/roles
 
 (5) Create the Argo Events sensor
 
+Modify the value of keys for the input parameters of the spark application in the workflow manifest of Events sensor (`events/sensor/spark-sensor.yaml`):
+
+```yaml
+arguments:
+    parameters:
+    - name: s3-bucket
+      value:  <bucket>
+    - name: s3-script-prefix
+      value: <key in s3 for the main spark application>
+    - name: s3-endpoint
+      value: "<endpoint>"
+    - name: s3-region
+      value: "<region>"
+    - name: s3-file-prefix # You can leave this as is
+      value: '{{steps.generate-salary.outputs.parameters.s3-file-prefix}}'
+```
+
+> [!NOTE]
+> There are also some other steps in the workflow that write an artifact into s3. You should alter
+> the key to suit your needs.
+
 ```bash
 kubectl apply -f events/sensor/spark-sensor.yaml
 ```

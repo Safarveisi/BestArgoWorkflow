@@ -35,47 +35,52 @@ spec:
                       value: spark-python
                 templates:
                 - name: k8s-orchestrate
-                  steps:
+                  dag:
+                    tasks:
 
-                  - - name: random-number-job
-                      template: random-number-job
+                      - name: random-number-job
+                        template: random-number-job
 
-                  - - name: print-generated-numbers
-                      template: print-generated-numbers
-                      arguments:
-                        parameters:
-                        - name: job-uid
-                          value: '{{steps.random-number-job.outputs.parameters.job-uid}}'
+                      - name: print-generated-numbers
+                        template: print-generated-numbers
+                        arguments:
+                          parameters:
+                          - name: job-uid
+                            value: '{{tasks.random-number-job.outputs.parameters.job-uid}}'
+                        dependencies: [random-number-job]
 
-                  - - name: delete-job
-                      template: delete-job
-                      arguments:
-                        parameters:
-                        - name: job-name
-                          value: '{{steps.random-number-job.outputs.parameters.job-name}}'
+                      - name: delete-job
+                        template: delete-job
+                        arguments:
+                          parameters:
+                          - name: job-name
+                            value: '{{tasks.random-number-job.outputs.parameters.job-name}}'
+                        dependencies: [random-number-job, print-generated-numbers]
 
-                  - - name: generate-salary
-                      template: generate-salary
+                      - name: generate-salary
+                        template: generate-salary
 
-                  - - name: spark-application
-                      template: spark-application
-                      continueOn:
-                        failed: true
-                      arguments:
-                        parameters:
-                          - name: s3-bucket
-                            value: customerintelligence
-                          - name: s3-script-prefix
-                            value: argo/scripts/python/spark-job.py
-                          - name: s3-endpoint
-                            value: "http://s3-de-central.profitbricks.com"
-                          - name: s3-region
-                            value: "eu-central-1"
-                          - name: s3-file-prefix
-                            value: '{{steps.generate-salary.outputs.parameters.s3-file-prefix}}'
+                      - name: spark-application
+                        template: spark-application
+                        continueOn:
+                          failed: true
+                        arguments:
+                          parameters:
+                            - name: s3-bucket
+                              value: customerintelligence
+                            - name: s3-script-prefix
+                              value: argo/scripts/python/spark-job.py
+                            - name: s3-endpoint
+                              value: "http://s3-de-central.profitbricks.com"
+                            - name: s3-region
+                              value: "eu-central-1"
+                            - name: s3-file-prefix
+                              value: '{{tasks.generate-salary.outputs.parameters.s3-file-prefix}}'
+                        dependencies: [generate-salary]
 
-                  - - name: delete-spark-application
-                      template: delete-spark-application
+                      - name: delete-spark-application
+                        template: delete-spark-application
+                        dependencies: [spark-application]
 
                 - name: generate-salary
                   container:

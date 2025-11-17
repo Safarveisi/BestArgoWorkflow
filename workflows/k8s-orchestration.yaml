@@ -14,10 +14,8 @@ spec:
   - name: k8s-orchestrate
     dag:
       tasks:
-
         - name: random-number-job
           template: random-number-job
-
         - name: print-generated-numbers
           template: print-generated-numbers
           arguments:
@@ -25,7 +23,6 @@ spec:
             - name: job-uid
               value: '{{tasks.random-number-job.outputs.parameters.job-uid}}'
           dependencies: [random-number-job]
-
         - name: delete-job
           template: delete-job
           arguments:
@@ -33,10 +30,8 @@ spec:
             - name: job-name
               value: '{{tasks.random-number-job.outputs.parameters.job-name}}'
           dependencies: [random-number-job, print-generated-numbers]
-
         - name: generate-salary
           template: generate-salary
-
         - name: spark-application
           template: spark-application
           continueOn:
@@ -54,7 +49,6 @@ spec:
               - name: s3-file-prefix
                 value: '{{tasks.generate-salary.outputs.parameters.s3-file-prefix}}'
           dependencies: [generate-salary]
-
         - name: delete-spark-application
           template: delete-spark-application
           dependencies: [spark-application]

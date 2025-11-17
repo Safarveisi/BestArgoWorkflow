@@ -17,14 +17,12 @@ spec:
       tasks:
         - name: influx
           template: influxdb              # start an influxdb as a daemon
-
         - name: split
           template: split
           arguments:
             parameters:
               - name: numParts
                 value: "{{workflow.parameters.numParts}}"
-
         - name: map
           template: map
           arguments:
@@ -39,7 +37,6 @@ spec:
                   key: "argo/{{workflow.name}}/parts/{{item}}.json"
           dependencies: [split, influx]
           withParam: "{{tasks.split.outputs.result}}"
-
         - name: reduce
           template: reduce
           arguments:

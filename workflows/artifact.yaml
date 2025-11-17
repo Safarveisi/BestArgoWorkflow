@@ -10,9 +10,6 @@ spec:
   volumes:
     - name: repo-volume
       emptyDir: {}
-  artifactRepositoryRef:
-    configMap: s3-repo-config
-    key: artifactRepository
   onExit: exit-handler
   templates:
   - name: artifact-example

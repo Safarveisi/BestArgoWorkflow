@@ -1,0 +1,50 @@
+# Argo controller-wide settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: workflow-controller-configmap
+  namespace: argo
+data:
+  artifactRepository: |
+    s3:
+      endpoint: s3-de-central.profitbricks.com:443
+      bucket: customerintelligence
+      region: eu-central-1
+      accessKeySecret:
+        name: s3-credentials
+        key: accessKey
+      secretKeySecret:
+        name: s3-credentials
+        key: secretKey
+  mainContainer: |
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 1m
+        memory: 64Mi
+      limits:
+        cpu: 0.5
+        memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000
+  executor: |
+    imagePullPolicy: IfNotPresent
+    resources:
+      requests:
+        cpu: 0.1
+        memory: 64Mi
+      limits:
+        cpu: 0.5
+        memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      runAsNonRoot: true
+      runAsUser: 1000

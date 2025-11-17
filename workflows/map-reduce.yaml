@@ -6,9 +6,6 @@ metadata:
 spec:
   serviceAccountName: playground-sa
   entrypoint: map-reduce-example
-  artifactRepositoryRef:
-    configMap: s3-repo-config
-    key: artifactRepository
   arguments:
     parameters:
       - name: numParts

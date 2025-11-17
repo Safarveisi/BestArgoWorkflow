@@ -26,9 +26,6 @@ spec:
               spec:
                 serviceAccountName: playground-sa
                 entrypoint: k8s-orchestrate
-                artifactRepositoryRef:
-                  configMap: s3-repo-config
-                  key: artifactRepository
                 arguments:
                   parameters:
                     - name: spark-job-name # Ensures the final step always runs if the spark job fails

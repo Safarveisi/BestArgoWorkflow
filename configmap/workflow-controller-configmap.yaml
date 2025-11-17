@@ -48,3 +48,10 @@ data:
         - ALL
       runAsNonRoot: true
       runAsUser: 1000
+  workflowDefaults: |
+    spec:
+      ttlStrategy:
+        secondsAfterCompletion: 3600
+      podGC:
+        strategy: OnPodCompletion
+      activeDeadlineSeconds: 300

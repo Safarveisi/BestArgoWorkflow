@@ -5,7 +5,7 @@ metadata:
   namespace: playground
 spec:
   serviceAccountName: playground-sa
-  activeDeadlineSeconds: 240 # terminate workflow after 4 minutes
+  activeDeadlineSeconds: 240 # terminate workflow after 4 minutes (this overrides the default specified in the controller cm)
   entrypoint: artifact-example
   volumes:
     - name: repo-volume

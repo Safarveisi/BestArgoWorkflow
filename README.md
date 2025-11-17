@@ -64,14 +64,14 @@ Suppose you want to trigger one of your workflows using a webhook - you can use 
 
 ```bash
 kubectl create namespace argo-events
-kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install.yaml
-kubectl apply -f https://raw.githubusercontent.com/argoproj/argo-events/stable/manifests/install-validating-webhook.yaml
+kubectl apply -n argo-events -f https://github.com/argoproj/argo-events/releases/download/v1.9.8/install.yaml
+kubectl apply -n argo-events -f https://github.com/argoproj/argo-events/releases/download/v1.9.8/install-validating-webhook.yaml
 ```
 
 (2) Create EventBus pods
 
 ```bash
-kubectl apply -n argo-events -f https://raw.githubusercontent.com/argoproj/argo-events/stable/examples/eventbus/native.yaml
+kubectl apply -n argo-events -f https://raw.githubusercontent.com/argoproj/argo-events/v1.9.8/examples/eventbus/native.yaml
 ```
 
 (3) Set up the event source for the webhook — this is one of the possible event source types supported by Argo Events.

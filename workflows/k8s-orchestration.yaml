@@ -22,6 +22,8 @@ spec:
             parameters:
             - name: job-uid
               value: '{{tasks.random-number-job.outputs.parameters.job-uid}}'
+            - name: job-completion-time
+              value: '{{tasks.random-number-job.outputs.parameters.job-completion-time}}'
           depends: "random-number-job.Succeeded"
         - name: delete-job
           template: delete-job
@@ -196,17 +198,22 @@ spec:
           jsonPath: '{.metadata.name}'
       - name: job-uid
         valueFrom:
-          jsonPath: '{.metadata.uid}'
+          jsonPath: '{.metadata.uid}' # You can access different keys in the job manifest and use it in other tasks
+      - name: job-completion-time
+        valueFrom:
+          jsonPath: '{.status.completionTime}' # Access status.completionTime and set it as an output
 
   - name: print-generated-numbers
     inputs:
       parameters:
       - name: job-uid
+      - name: job-completion-time
     container:
       image: bitnami/kubectl:latest
       command: [sh, -c]
       args:
         - |
+          echo "Job completed at $(date -d "{{inputs.parameters.job-completion-time}}" +"%Y-%m-%d %H:%M:%S")"
           for pod in $(kubectl get pods -n {{workflow.namespace}} \
                     -l controller-uid={{inputs.parameters.job-uid}} \
                     -o name); do

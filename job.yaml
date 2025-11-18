@@ -1,0 +1,17 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sample-rand-job
+  namespace: default
+spec:
+  completions: 1
+  parallelism: 1
+  template:
+    metadata:
+      name: rand
+    spec:
+      containers:
+      - name: rand
+        image: python:3.10-alpine
+        command: ["python", "-c", "import random; import time; print('Random:', random.randint(1, 1000)); time.sleep(5)"]
+      restartPolicy: Never

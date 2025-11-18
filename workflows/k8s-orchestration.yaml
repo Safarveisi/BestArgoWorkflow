@@ -14,6 +14,8 @@ spec:
   - name: k8s-orchestrate
     dag:
       tasks:
+        - name: remove-pods # Independent of other tasks
+          template: remove-pods
         - name: random-number-job
           template: random-number-job
         - name: print-generated-numbers
@@ -52,6 +54,16 @@ spec:
         - name: delete-spark-application
           template: delete-spark-application
           depends: "spark-application.Succeeded || spark-application.Failed"
+
+  - name: remove-pods
+    container:
+      image: bitnami/kubectl:latest
+      command: [sh, -c]
+      args:
+        - |
+          kubectl get pods -n {{workflow.namespace}} -o json \
+          | jq -r '.items[] | select(.status.phase=="Failed" or .status.phase=="Succeeded") | .metadata.name' \
+          | xargs -r -n1 kubectl delete pod -n {{workflow.namespace}}
 
   - name: generate-salary
     container:

@@ -64,6 +64,9 @@ spec:
           kubectl get pods -n {{workflow.namespace}} -o json \
           | jq -r '.items[] | select(.status.phase=="Failed" or .status.phase=="Succeeded") | .metadata.name' \
           | xargs -r -n1 kubectl delete pod -n {{workflow.namespace}}
+    nodeSelector:
+      # cloud.ionos.com/node-id: 7f627759-4174-4beb-99ce-05cce45b24cc # Use node id to schedule the step on it
+      role: maintanance # Or you can use the node label to schedule the step on it
 
   - name: generate-salary
     container:
@@ -129,6 +132,8 @@ spec:
           restartPolicy:
             type: Never
           driver:
+            nodeSelector:
+              big-data/spark: driver
             configMaps:
               - name: spark-dummy
                 path: /mnt/dummy
@@ -156,6 +161,8 @@ spec:
                     name: s3-credentials
                     key: secretKey
           executor:
+            nodeSelector:
+              big-data/spark: executor
             instances: 1
             cores: 1
             memory: 512m

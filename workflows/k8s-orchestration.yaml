@@ -1,3 +1,5 @@
+# Make sure you have your nodes properly labelled so that spark-application and remove-pods templates are error-free.
+# You can use kubectl label nodes <node> <label>=<value> to add required labels to your nodes.
 apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:

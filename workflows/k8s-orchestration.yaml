@@ -68,7 +68,7 @@ spec:
           | xargs -r -n1 kubectl delete pod -n {{workflow.namespace}}
     nodeSelector:
       # cloud.ionos.com/node-id: 7f627759-4174-4beb-99ce-05cce45b24cc # Use node id to schedule the step on it
-      role: maintanance # Or you can use the node label to schedule the step on it
+      role: maintanance # Or you can use another node's label to schedule the step on it
 
   - name: generate-salary
     container:

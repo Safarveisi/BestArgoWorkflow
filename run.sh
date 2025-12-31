@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Includes helper shell scripts
+
 ROOT=$(git rev-parse --show-toplevel)
 PYSPARK_SCRIPT=workflows/spark-job.py
 
